@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SolidarityGrid.Application\SolidarityGrid.Application.csproj" />
+    <ProjectReference Include="..\SolidarityGrid.Infrastructure\SolidarityGrid.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

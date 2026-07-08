@@ -7,6 +7,4 @@ public interface IPaymentRepository
     Task<IReadOnlyCollection<Payment>> GetAllAsync(CancellationToken cancellationToken = default);
 
     Task AddAsync(Payment payment,CancellationToken cancellationToken = default);
-
-    Task UpdateAsync(Payment payment,CancellationToken cancellationToken = default);
 }
