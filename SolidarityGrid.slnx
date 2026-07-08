@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="src/SolidarityGrid.Api/SolidarityGrid.Api.csproj" />
+  <Project Path="src/SolidarityGrid.Application/SolidarityGrid.Application.csproj" Id="c6b92f1a-ee89-4ca8-8c22-bd9b5759083c" />
+  <Project Path="src/SolidarityGrid.Domain/SolidarityGrid.Domain.csproj" Id="9fec40ed-821f-4916-865a-263d59a41054" />
+</Solution>
