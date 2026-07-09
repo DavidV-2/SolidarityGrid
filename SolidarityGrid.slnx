@@ -3,5 +3,4 @@
   <Project Path="src/SolidarityGrid.Application/SolidarityGrid.Application.csproj" Id="c6b92f1a-ee89-4ca8-8c22-bd9b5759083c" />
   <Project Path="src/SolidarityGrid.Domain/SolidarityGrid.Domain.csproj" Id="9fec40ed-821f-4916-865a-263d59a41054" />
   <Project Path="src/SolidarityGrid.Infrastructure/SolidarityGrid.Infrastructure.csproj" Id="f4790ddd-a2fd-47fc-9ff5-16d0f9127e5c" />
-  <Project Path="src/SolidarityGrid.Shared/SolidarityGrid.Shared.csproj" Id="995dec6e-3566-437e-afa1-68f659b4b26d" />
 </Solution>
