@@ -1,6 +1,6 @@
 ﻿namespace SolidarityGrid.Infrastructure.Persistence;
 
-public sealed class SolidarityGridDbContext : DbContext
+public sealed class SolidarityGridDbContext : DbContext, IUnitOfWork
 {
     public SolidarityGridDbContext(
         DbContextOptions<SolidarityGridDbContext> options)

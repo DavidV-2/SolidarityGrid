@@ -19,11 +19,13 @@ public static class PaymentMappings
 
         return new PaymentDto
         {
+            Id = entity.Id,
             TransactionId = entity.TransactionId,
             Amount = entity.Amount,
             Currency = entity.Currency,
             Status = entity.Status.ToString(),
-            CreateAt = entity.CreatedAt,
+            ProcessingNode = entity.ProcessingNode,
+            CreatedAt = entity.CreatedAt,
             CompletedAt = entity.CompletedAt
         };
     }

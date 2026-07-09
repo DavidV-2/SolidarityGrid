@@ -1,0 +1,84 @@
+version: '3.8'
+
+services:
+  # SQL Server
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: solidaritygrid-sql
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=YourStrong!Passw0rd123
+      - MSSQL_PID=Express
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    networks:
+      - solidaritygrid-network
+
+  # Nodo A
+  node-a:
+    build:
+      context: .
+      dockerfile: src/SolidarityGrid.Api/Dockerfile
+    container_name: solidaritygrid-node-a
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - NODE_ID=node-a
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SolidarityGrid;User=sa;Password=YourStrong!Passw0rd123;TrustServerCertificate=true
+      - NODES__0__Url=http://node-b:8080
+      - NODES__1__Url=http://node-c:8080
+    ports:
+      - "8081:8080"
+    depends_on:
+      - sqlserver
+    networks:
+      - solidaritygrid-network
+
+  # Nodo B
+  node-b:
+    build:
+      context: .
+      dockerfile: src/SolidarityGrid.Api/Dockerfile
+    container_name: solidaritygrid-node-b
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - NODE_ID=node-b
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SolidarityGrid;User=sa;Password=YourStrong!Passw0rd123;TrustServerCertificate=true
+      - NODES__0__Url=http://node-a:8080
+      - NODES__1__Url=http://node-c:8080
+    ports:
+      - "8082:8080"
+    depends_on:
+      - sqlserver
+    networks:
+      - solidaritygrid-network
+
+  # Nodo C
+  node-c:
+    build:
+      context: .
+      dockerfile: src/SolidarityGrid.Api/Dockerfile
+    container_name: solidaritygrid-node-c
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - NODE_ID=node-c
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SolidarityGrid;User=sa;Password=YourStrong!Passw0rd123;TrustServerCertificate=true
+      - NODES__0__Url=http://node-a:8080
+      - NODES__1__Url=http://node-b:8080
+    ports:
+      - "8083:8080"
+    depends_on:
+      - sqlserver
+    networks:
+      - solidaritygrid-network
+
+networks:
+  solidaritygrid-network:
+    driver: bridge
+
+volumes:
+  sqlserver-data:

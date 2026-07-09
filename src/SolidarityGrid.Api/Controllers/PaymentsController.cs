@@ -18,8 +18,16 @@ public sealed class PaymentsController(IPaymentApplicationService paymentService
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetPaymentAsync(string transactionId,CancellationToken cancellationToken)
-    { 
-        var payment = await paymentService.GetPaymentAsync(transactionId,cancellationToken);
+    {
+        var payment = await paymentService.GetPaymentAsync(transactionId, cancellationToken);
+        return Ok(payment);
+    }
+    [HttpGet("by-id/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetPaymentByIdAsync(Guid id,CancellationToken cancellationToken)
+    {
+        var payment = await paymentService.GetPaymentByIdAsync(id, cancellationToken);
         return Ok(payment);
     }
     [HttpGet]
