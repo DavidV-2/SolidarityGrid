@@ -19,10 +19,10 @@ El resultado es una plataforma capaz de escalar horizontalmente, tolerar fallos 
 
 # Tabla de Contenidos
 
-- [Objetivos](#objetivos)
-- [Características principales](#características-principales)
-- [Arquitectura](#arquitectura)
-- [Flujo de procesamiento](#flujo-de-procesamiento)
+- Objetivos
+- Características principales
+- Arquitectura
+- Flujo de procesamiento
 - Decisiones de diseño
 - Estrategia de resiliencia
 - Estructura del proyecto
@@ -34,6 +34,7 @@ El resultado es una plataforma capaz de escalar horizontalmente, tolerar fallos 
 - Observabilidad
 - Evidencias
 - Mejoras futuras
+- [Local Pipeline](#local-pipeline)
 
 ---
 
@@ -993,7 +994,7 @@ Durante el desarrollo de la solución se tomaron las siguientes decisiones de ar
 
 Estas decisiones priorizan una solución simple, mantenible y alineada con los objetivos del desafío, evitando introducir componentes que incrementen la complejidad sin aportar un beneficio significativo para el alcance de la prueba.
 
-___
+__
 
 # Autor
 
@@ -1012,3 +1013,35 @@ Tecnologías principales:
 - Clean Architecture
 - APIs REST
 - Sistemas Distribuidos
+
+___
+
+# Local Pipeline
+
+```powershell
+Write-Host "1. Levantando la red Mesh de SolidarityGrid..." -ForegroundColor Cyan
+docker compose up -d --build
+
+Write-Host "2. Esperando el inicio de los contenedores y SQL Server..." -ForegroundColor Yellow
+Start-Sleep -Seconds 15
+
+Write-Host "3. Simulando inyección de pagos concurrentes (Stress Test)..." -ForegroundColor Cyan
+1..5 | ForEach-Object {
+     $body = @{
+         transactionId = "TX$($_)"
+         amount = $_ * 15
+         currency = "ARC"
+     } | ConvertTo-Json
+
+     Invoke-RestMethod `
+         -Method POST `
+         -Uri "http://localhost:8081/api/Payments" `
+         -ContentType "application/json" `
+         -Body $body
+}
+
+Write-Host "4. [CAOS] Derribando bruscamente el Nodo A..." -ForegroundColor Red
+docker stop solidaritygrid-node-a
+
+Write-Host "5. Monitoreando logs del clúster de relevo (Nodo B y C)..." -ForegroundColor Green
+docker compose logs -f node-b node-c
