@@ -19,16 +19,26 @@ public sealed class NodesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     public IActionResult ReceiveHeartbeat([FromBody] HeartbeatRequest request)
     {
-        _nodeRegistry.UpdateHeartbeat(request.NodeName);
-
-        if (!string.IsNullOrWhiteSpace(request.NodeName ))
+        if (!string.IsNullOrWhiteSpace(request.NodeName))
         {
-           _logger.LogDebug("Heartbeat received from {NodeName } at {Timestamp}", request.NodeName , request.Timestamp);
+            _nodeRegistry.UpdateHeartbeat(request.NodeName);
 
-            return Ok(new { Status = "alive", ReceivedAt = DateTimeOffset.UtcNow });
+            if (string.IsNullOrWhiteSpace(request.NodeName))
+            {
+                return BadRequest("NodeName is required");
+            }
+
+            _logger.LogDebug("Heartbeat received from {NodeName} at {Timestamp}", request.NodeName, request.Timestamp);
+
+            return Ok(
+                new {
+                    CurrentNode = request.NodeName,
+                    Status = "alive", 
+                    ReceivedAt = DateTimeOffset.UtcNow 
+                });
         }
 
-        return BadRequest("NodeName  is required");
+        return BadRequest("NodeName is required");
     }
 
     [HttpGet("status")]

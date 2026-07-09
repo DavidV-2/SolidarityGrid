@@ -41,7 +41,7 @@ public sealed class PaymentRepository : IPaymentRepository
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<bool> TryClaimTransactionAsync(Guid paymentId, string processingNode, CancellationToken cancellationToken = default)
+    public async Task<bool> TryClaimTransactionAsync(Guid paymentId, string ProcessingNode, CancellationToken cancellationToken = default)
     {
         var payment = await _context.Payments
             .FirstOrDefaultAsync(
@@ -54,13 +54,14 @@ public sealed class PaymentRepository : IPaymentRepository
 
         try
         {
-            payment.StartProcessing(processingNode);
+            payment.StartProcessing(ProcessingNode);
 
-            // Persist immediately to atomically claim the payment
+            // Atomic claim.
+            // Save immediately so no other node can acquire the payment.
             await _context.SaveChangesAsync(cancellationToken);
             return true;
         }
-        catch (Exception ex) when (ex is DbUpdateConcurrencyException || ex is InvalidOperationException)
+        catch (DbUpdateConcurrencyException)
         {
             return false;
         }

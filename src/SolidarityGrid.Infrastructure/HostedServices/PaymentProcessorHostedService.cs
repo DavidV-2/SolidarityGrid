@@ -2,15 +2,15 @@
 
 public class PaymentProcessorHostedService : BackgroundService
 {
+    private readonly NodeConfig _nodeConfig;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<PaymentProcessorHostedService> _logger;
-    private readonly TimeSpan _processingInterval = TimeSpan.FromSeconds(5);
-    private readonly TimeSpan _heartbeatTimeout = TimeSpan.FromSeconds(10);
 
-    public PaymentProcessorHostedService(IServiceScopeFactory scopeFactory, ILogger<PaymentProcessorHostedService> logger)
+    public PaymentProcessorHostedService(IServiceScopeFactory scopeFactory, ILogger<PaymentProcessorHostedService> logger, IOptions<NodeConfig> options)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
+        _nodeConfig = options.Value;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -22,7 +22,8 @@ public class PaymentProcessorHostedService : BackgroundService
             try
             {
                 await ProcessPaymentsAsync(stoppingToken);
-                await Task.Delay(_processingInterval, stoppingToken);
+                await Task.Delay(
+                    TimeSpan.FromSeconds(_nodeConfig.ProcessingIntervalSeconds), stoppingToken);
             }
             catch (Exception ex)
             {
@@ -39,17 +40,20 @@ public class PaymentProcessorHostedService : BackgroundService
         using var scope = _scopeFactory.CreateScope();
         var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
         var repository = scope.ServiceProvider.GetRequiredService<IPaymentRepository>();
-        var NodeName  = Environment.GetEnvironmentVariable("NODE_ID") ?? "unknown-node";
+        var nodeName = _nodeConfig.NodeName;
 
         var pendingTransactions = await repository.GetAllPendingAsync(cancellationToken);
 
         foreach (var payment in pendingTransactions)
         {
-            await ProcessClaimedPaymentAsync(payment.Id,NodeName ,repository,unitOfWork,cancellationToken);
+            await ProcessClaimedPaymentAsync(payment.Id, nodeName, repository, unitOfWork, cancellationToken);
         }
 
 
-        var orphanTransactions = await repository.GetOrphanTransactionsAsync(_heartbeatTimeout, cancellationToken);
+        var orphanTransactions =
+            await repository.GetOrphanTransactionsAsync(
+                TimeSpan.FromSeconds(_nodeConfig.HeartbeatTimeoutSeconds),
+                cancellationToken);
 
         foreach (var transaction in orphanTransactions)
         {
@@ -57,7 +61,7 @@ public class PaymentProcessorHostedService : BackgroundService
                                transaction.TransactionId,
                                transaction.LastHeartbeatUtc);
 
-            await ProcessClaimedPaymentAsync(transaction.Id, NodeName , repository, unitOfWork, cancellationToken);
+            await ProcessClaimedPaymentAsync(transaction.Id, nodeName, repository, unitOfWork, cancellationToken);
         }
 
     }
@@ -65,7 +69,8 @@ public class PaymentProcessorHostedService : BackgroundService
     {
         var processingTime = Random.Shared.Next(5000, 10000);
         var elapsed = 0;
-        var heartbeatInterval = 3000;
+        var heartbeatInterval = TimeSpan.FromSeconds(_nodeConfig.HeartbeatIntervalSeconds);
+
 
         while (elapsed < processingTime)
         {
@@ -89,9 +94,17 @@ public class PaymentProcessorHostedService : BackgroundService
                 return;
             }
 
-            var remaining = Math.Min(heartbeatInterval, processingTime - elapsed);
-            await Task.Delay(remaining, cancellationToken);
-            elapsed += remaining;
+            var remaining = processingTime - elapsed;
+
+            await Task.Delay(
+                remaining < heartbeatInterval.TotalMilliseconds
+                    ? remaining
+                    : (int)heartbeatInterval.TotalMilliseconds,
+                cancellationToken);
+
+            elapsed += Math.Min(
+                remaining,
+                (int)heartbeatInterval.TotalMilliseconds);
         }
 
         try
@@ -106,12 +119,9 @@ public class PaymentProcessorHostedService : BackgroundService
                 payment.TransactionId);
         }
     }
-    private async Task ProcessClaimedPaymentAsync(Guid paymentId, string NodeName , IPaymentRepository repository, IUnitOfWork unitOfWork, CancellationToken cancellationToken)
+    private async Task ProcessClaimedPaymentAsync(Guid paymentId, string nodeName, IPaymentRepository repository, IUnitOfWork unitOfWork, CancellationToken cancellationToken)
     {
-        var claimed = await repository.TryClaimTransactionAsync(
-        paymentId,
-        NodeName ,
-        cancellationToken);
+        var claimed = await repository.TryClaimTransactionAsync(paymentId, nodeName, cancellationToken);
 
         if (!claimed)
             return;
@@ -124,7 +134,8 @@ public class PaymentProcessorHostedService : BackgroundService
             return;
 
         _logger.LogInformation(
-            "Processing transaction {TransactionId}",
+            "Node {Node} Processing transaction {TransactionId}",
+            nodeName,
             payment.TransactionId);
 
         await ProcessWithHeartbeatAsync(

@@ -1,4 +1,3 @@
-version: '3.8'
 
 services:
   # SQL Server
@@ -25,7 +24,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
-      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SolidarityGrid;TrustServerCertificate=true
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SolidarityGrid;User Id=sa;Password=YourStrong!Passw0rd123;TrustServerCertificate=true;Encrypt=false
       - Node__NodeName=node-a
       - Node__PeerNodes__0=http://node-b:8080
       - Node__PeerNodes__1=http://node-c:8080
@@ -46,7 +45,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
-      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SolidarityGrid;TrustServerCertificate=true
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SolidarityGrid;User Id=sa;Password=YourStrong!Passw0rd123;TrustServerCertificate=true;Encrypt=false
       - Node__NodeName=node-b
       - Node__PeerNodes__0=http://node-a:8080
       - Node__PeerNodes__1=http://node-c:8080
@@ -67,7 +66,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
-      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SolidarityGrid;TrustServerCertificate=true
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SolidarityGrid;User Id=sa;Password=YourStrong!Passw0rd123;TrustServerCertificate=true;Encrypt=false
       - Node__NodeName=node-c
       - Node__PeerNodes__0=http://node-a:8080
       - Node__PeerNodes__1=http://node-b:8080

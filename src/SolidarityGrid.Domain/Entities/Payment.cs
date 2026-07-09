@@ -1,6 +1,4 @@
-﻿using System.Net.NetworkInformation;
-
-namespace SolidarityGrid.Domain.Entities;
+﻿namespace SolidarityGrid.Domain.Entities;
 
 public sealed class Payment
 {
@@ -54,7 +52,6 @@ public sealed class Payment
 
         Status = PaymentStatus.Completed;
         CompletedAt = DateTimeOffset.UtcNow;
-        ProcessingNode = null;
         LastHeartbeatUtc = null;
     }
     public void Fail()
@@ -64,7 +61,6 @@ public sealed class Payment
 
         Status = PaymentStatus.Failed;
         CompletedAt = DateTimeOffset.UtcNow;
-        ProcessingNode = null;
         LastHeartbeatUtc = null;
     }
     public void RenewLease()

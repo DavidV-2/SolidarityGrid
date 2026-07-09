@@ -10,5 +10,5 @@ public interface IPaymentRepository
     Task<IReadOnlyCollection<Payment>> GetAllAsync(CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<Payment>> GetAllPendingAsync(CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<Payment>> GetOrphanTransactionsAsync(TimeSpan heartbeatTimeout, CancellationToken cancellationToken = default);
-    Task<bool> TryClaimTransactionAsync(Guid paymentId, string processingNode, CancellationToken cancellationToken = default);
+    Task<bool> TryClaimTransactionAsync(Guid paymentId, string ProcessingNode, CancellationToken cancellationToken = default);
 }
