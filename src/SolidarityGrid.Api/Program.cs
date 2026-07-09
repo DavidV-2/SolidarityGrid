@@ -7,11 +7,11 @@ builder.Services
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
-{
-    var dbContext = scope.ServiceProvider.GetRequiredService<SolidarityGridDbContext>();
-    await dbContext.Database.MigrateAsync();
-}
+await using var scope = app.Services.CreateAsyncScope();
+
+var dbContext = scope.ServiceProvider.GetRequiredService<SolidarityGridDbContext>();
+
+await dbContext.Database.MigrateAsync();
 
 app.UseApi();
 

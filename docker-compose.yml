@@ -25,16 +25,17 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
-      - NODE_ID=node-a
-      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SolidarityGrid;User=sa;Password=YourStrong!Passw0rd123;TrustServerCertificate=true
-      - NODES__0__Url=http://node-b:8080
-      - NODES__1__Url=http://node-c:8080
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SolidarityGrid;TrustServerCertificate=true
+      - Node__NodeName=node-a
+      - Node__PeerNodes__0=http://node-b:8080
+      - Node__PeerNodes__1=http://node-c:8080
     ports:
       - "8081:8080"
     depends_on:
       - sqlserver
     networks:
       - solidaritygrid-network
+    restart: unless-stopped
 
   # Nodo B
   node-b:
@@ -45,16 +46,17 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
-      - NODE_ID=node-b
-      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SolidarityGrid;User=sa;Password=YourStrong!Passw0rd123;TrustServerCertificate=true
-      - NODES__0__Url=http://node-a:8080
-      - NODES__1__Url=http://node-c:8080
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SolidarityGrid;TrustServerCertificate=true
+      - Node__NodeName=node-b
+      - Node__PeerNodes__0=http://node-a:8080
+      - Node__PeerNodes__1=http://node-c:8080
     ports:
       - "8082:8080"
     depends_on:
       - sqlserver
     networks:
       - solidaritygrid-network
+    restart: unless-stopped
 
   # Nodo C
   node-c:
@@ -65,16 +67,17 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
-      - NODE_ID=node-c
-      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SolidarityGrid;User=sa;Password=YourStrong!Passw0rd123;TrustServerCertificate=true
-      - NODES__0__Url=http://node-a:8080
-      - NODES__1__Url=http://node-b:8080
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SolidarityGrid;TrustServerCertificate=true
+      - Node__NodeName=node-c
+      - Node__PeerNodes__0=http://node-a:8080
+      - Node__PeerNodes__1=http://node-b:8080
     ports:
       - "8083:8080"
     depends_on:
       - sqlserver
     networks:
       - solidaritygrid-network
+    restart: unless-stopped
 
 networks:
   solidaritygrid-network:

@@ -18,14 +18,14 @@ public sealed class NodeHeartbeatService : BackgroundService
         var nodeConfig = options.Value;
 
 
-        _nodeName = nodeConfig.NodeName;
+        _nodeName= nodeConfig.NodeName;
         _heartbeatIntervalSeconds = nodeConfig.HeartbeatIntervalSeconds;
         _peerNodes = nodeConfig.PeerNodes ?? new List<string>();
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("NodeHeartbeatService started for node {NodeName }", _nodeName);
+        _logger.LogInformation("NodeHeartbeatService started for node {NodeName}", _nodeName);
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -41,7 +41,7 @@ public sealed class NodeHeartbeatService : BackgroundService
             }
         }
 
-        _logger.LogInformation("NodeHeartbeatService stopped for node {NodeName }", _nodeName);
+        _logger.LogInformation("NodeHeartbeatService stopped for node {NodeName}", _nodeName);
     }
 
     private async Task SendHeartbeatsAsync(CancellationToken cancellationToken)
@@ -54,7 +54,7 @@ public sealed class NodeHeartbeatService : BackgroundService
 
         var heartbeatRequest = new
         {
-            NodeName = _nodeName,
+            NodeName= _nodeName,
             Timestamp = DateTimeOffset.UtcNow
         };
 

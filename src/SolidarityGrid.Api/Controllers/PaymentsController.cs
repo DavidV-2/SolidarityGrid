@@ -2,12 +2,12 @@
 
 [Route("api/[controller]")]
 [ApiController]
-public sealed class PaymentsController(IPaymentApplicationService paymentService) : ControllerBase 
+public sealed class PaymentsController(IPaymentApplicationService paymentService) : ControllerBase
 {
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status202Accepted)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> CreatePaymentAsync( [FromBody] CreatePaymentDto request, CancellationToken cancellationToken)
+    public async Task<IActionResult> CreatePaymentAsync([FromBody] CreatePaymentDto request, CancellationToken cancellationToken)
     {
         var response = await paymentService.CreatePaymentAsync(request, cancellationToken);
 
@@ -17,23 +17,17 @@ public sealed class PaymentsController(IPaymentApplicationService paymentService
     [HttpGet("{transactionId}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetPaymentAsync(string transactionId,CancellationToken cancellationToken)
+    public async Task<IActionResult> GetPaymentAsync(string transactionId, CancellationToken cancellationToken)
     {
         var payment = await paymentService.GetPaymentAsync(transactionId, cancellationToken);
-        return Ok(payment);
-    }
-    [HttpGet("by-id/{id:guid}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetPaymentByIdAsync(Guid id,CancellationToken cancellationToken)
-    {
-        var payment = await paymentService.GetPaymentByIdAsync(id, cancellationToken);
+        if (payment is null)
+            return NotFound();
+
         return Ok(payment);
     }
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> GetPaymentsAsync( CancellationToken cancellationToken)
+    public async Task<IActionResult> GetPaymentsAsync(CancellationToken cancellationToken)
     {
         var payments = await paymentService.GetPaymentsAsync(cancellationToken);
 
