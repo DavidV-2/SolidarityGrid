@@ -1,5 +1,9 @@
 # SolidarityGrid
 
+🇺🇸 English Documentation (default)
+
+🇨🇴 [Leer documentación en español](README.es.md)
+
 [![.NET 8](https://img.shields.io/badge/.NET-8.0-purple.svg)](https://dotnet.microsoft.com/download/dotnet/8.0)
 [![Docker](https://img.shields.io/badge/Docker-Compose-blue.svg)](https://www.docker.com/)
 [![SQL Server](https://img.shields.io/badge/SQL%20Server-2022-red.svg)](https://www.microsoft.com/sql-server)
@@ -7,67 +11,66 @@
 
 ---
 
-Plataforma distribuida para procesamiento de pagos sin coordinador central ni sistema de mensajería externo.
+A distributed payment processing platform built without a central coordinator or external messaging system.
 
-Desarrollada en .NET 8 como prueba de concepto para el desafío **Payment Mesh Resilience**: múltiples nodos colaboran procesando transacciones de forma resiliente, detectan caídas de compañeros y recuperan trabajo pendiente automáticamente, garantizando procesamiento único por pago.
+Developed in .NET 8 as a proof of concept for the **Payment Mesh Resilience** challenge, where multiple nodes collaborate to process transactions resiliently, detect peer failures, and automatically recover unfinished work, ensuring each payment is processed exactly once.
 
 ---
 
-# Tabla de Contenidos
+# Table of Contents
 
-- [Objetivos](#objetivos)
-- [Características principales](#características-principales)
-- [Arquitectura](#arquitectura)
-- [Flujo de Procesamiento](#flujo-de-procesamiento)
-- [Recuperación ante Fallos](#recuperación-ante-fallos)
-- [Estructura del proyecto](#estructura-del-proyecto)
-- [Tecnologías](#tecnologías)
-- [Configuración](#configuración)
-- [Ejecución](#ejecución)
+- [Objectives](#objectives)
+- [Key Features](#key-features)
+- [Architecture](#architecture)
+- [Processing Flow](#processing-flow)
+- [Failure Recovery](#failure-recovery)
+- [Project Structure](#project-structure)
+- [Technologies](#technologies)
+- [Configuration](#configuration)
+- [Getting Started](#getting-started)
 - [API](#api)
-- [Simulación de Failover](#simulación-de-failover)
-- [Observabilidad](#observabilidad)
-- [Autor](#autor)
+- [Failover Simulation](#failover-simulation)
+- [Observability](#observability)
+- [Author](#author)
 - [Local Pipeline](#local-pipeline)
 
 ---
 
-# Objetivos
+# Objectives
 
-La solución fue diseñada para demostrar los siguientes aspectos técnicos:
+The solution was designed to demonstrate the following technical capabilities:
 
-- Procesamiento distribuido de transacciones.
-- Coordinación entre múltiples nodos sin un líder permanente.
-- Recuperación automática de transacciones cuando un nodo deja de responder.
-- Prevención del procesamiento duplicado mediante concurrencia optimista.
-- Comunicación directa entre nodos utilizando HTTP.
-- Despliegue completo con un único comando mediante Docker Compose.
-- Arquitectura mantenible, desacoplada y preparada para evolucionar.
+- Distributed transaction processing.
+- Coordination between multiple nodes without a permanent leader.
+- Automatic recovery of transactions when a node becomes unavailable.
+- Prevention of duplicate processing through optimistic concurrency.
+- Direct node-to-node communication over HTTP.
+- Fully automated deployment with a single Docker Compose command.
+- A maintainable, loosely coupled architecture designed for future evolution.
+---
+
+# Key Features
+
+- Built following the principles of Clean Architecture.
+- Asynchronous payment processing using Background Services.
+- Peer-to-peer communication through HTTP Heartbeats.
+- Automatic detection of inactive nodes.
+- Automatic recovery of orphaned transactions (Failover).
+- Optimistic Concurrency using `RowVersion`.
+- Exclusive transaction ownership through Lease Ownership.
+- Centralized persistence with SQL Server.
+- Automatic API documentation with Swagger.
+- Reproducible deployment using Docker Compose.
 
 ---
 
-# Características principales
+# Architecture
 
-- Arquitectura basada en Clean Architecture.
-- Procesamiento asíncrono mediante Background Services.
-- Comunicación Peer-to-Peer utilizando Heartbeats HTTP.
-- Detección automática de nodos inactivos.
-- Recuperación de transacciones huérfanas (Failover).
-- Optimistic Concurrency utilizando `RowVersion`.
-- Asignación exclusiva de transacciones mediante Lease Ownership.
-- Persistencia centralizada en SQL Server.
-- Documentación automática mediante Swagger.
-- Despliegue reproducible utilizando Docker Compose.
+The platform consists of three identical nodes running the exact same application.
 
----
+There is no master node or central coordinator. Each instance can accept incoming requests, claim pending transactions, process payments, and take over unfinished work from another node when a failure is detected.
 
-# Arquitectura
-
-La plataforma está compuesta por tres nodos idénticos que ejecutan exactamente la misma aplicación.
-
-No existe un nodo maestro ni un coordinador central. Cada instancia puede aceptar solicitudes, reclamar transacciones pendientes, procesar pagos y asumir el trabajo de otro nodo cuando detecta un fallo.
-
-Todos los nodos comparten la misma base de datos y mantienen comunicación periódica mediante Heartbeats para conocer el estado del clúster.
+All nodes share the same database and periodically exchange Heartbeats to monitor the health of the cluster.
 
 ```mermaid
 flowchart TD
@@ -100,9 +103,9 @@ NodeC --> SQL
 ```
 ## Clean Architecture
 
-La solución está organizada siguiendo los principios de Clean Architecture, separando claramente las responsabilidades entre las diferentes capas de la aplicación.
+The solution is organized following the principles of Clean Architecture, with a clear separation of responsibilities across the application's layers.
 
-Esta organización permite que las reglas de negocio permanezcan independientes de la infraestructura, facilitando la mantenibilidad, la evolución del sistema y las pruebas unitarias.
+This approach keeps the business rules independent of infrastructure concerns, improving maintainability, enabling future evolution, and facilitating unit testing.
 
 ```
 Presentation (API)
@@ -116,69 +119,72 @@ Domain
         │
 Infrastructure
 ```
-Cada proyecto posee una responsabilidad específica:
 
-| Proyecto | Responsabilidad |
-|----------|-----------------|
-| SolidarityGrid.Api | Expone los endpoints REST, configuración, inyección de dependencias y documentación Swagger. |
-| SolidarityGrid.Application | Contiene los casos de uso, servicios de aplicación y contratos utilizados por la solución. |
-| SolidarityGrid.Domain | Define el modelo de dominio, entidades, enumeraciones, excepciones y reglas de negocio. |
-| SolidarityGrid.Infrastructure | Implementa persistencia, Entity Framework Core, repositorios, Background Services y comunicación entre nodos. |
+Each project has a specific responsibility:
+
+| Project | Responsibility |
+|----------|----------------|
+| SolidarityGrid.Api | Exposes the REST API endpoints, application configuration, dependency injection, and Swagger documentation. |
+| SolidarityGrid.Application | Contains application use cases, application services, and contracts used throughout the solution. |
+| SolidarityGrid.Domain | Defines the domain model, entities, enumerations, exceptions, and business rules. |
+| SolidarityGrid.Infrastructure | Implements persistence, Entity Framework Core, repositories, Background Services, and inter-node communication. |
 
 
-## Responsabilidades de cada nodo
+## Node Responsibilities
 
-Cada instancia de la aplicación es capaz de:
+Each application instance is capable of:
 
-- Exponer la API REST.
-- Registrar nuevas transacciones.
-- Reclamar pagos pendientes.
-- Procesar transacciones de forma asíncrona.
-- Publicar Heartbeats periódicos.
-- Detectar nodos inactivos.
-- Recuperar transacciones abandonadas.
-- Finalizar el procesamiento de forma segura.
+- Exposing the REST API.
+- Registering new transactions.
+- Claiming pending payments.
+- Processing transactions asynchronously.
+- Publishing periodic Heartbeats.
+- Detecting inactive nodes.
+- Recovering abandoned transactions.
+- Completing transaction processing safely.
 
-Esta estrategia elimina el punto único de fallo y permite escalar horizontalmente agregando nuevas instancias sin modificar la lógica de negocio.
-
----
-# Desiciones clave
-
-| Decisión | Justificación |
-|----------|-----------------|
-| Clean Architecture	| Separa reglas de negocio de infraestructura, facilitando mantenibilidad y pruebas. |
-| SQL Server compartido	| Centraliza el estado y simplifica la coordinación distribuida.|
-| BackgroundService	| Desacopla recepción HTTP del procesamiento, evitando bloqueos.|
-| Heartbeats HTTP | Detectan nodos inactivos sin herramientas externas.|
-| Optimistic Concurrency (RowVersion)	| Evita duplicados usando control de concurrencia nativo de SQL Server.|
-| Docker Compose	| Levanta toda la plataforma con un comando.|
-| HTTP entre nodos | complejidad y evita brokers externos.|
----
-
-## Procesamiento asíncrono
-
-El procesamiento de un pago no ocurre durante la solicitud HTTP.
-
-Cuando un cliente registra una transacción, la API únicamente valida la información y persiste el registro con estado Pending, devolviendo inmediatamente una respuesta al consumidor.
-
-El trabajo pesado es ejecutado posteriormente por un BackgroundService, permitiendo que la API permanezca ligera y con baja latencia.
-
-### Beneficios
-
-- Respuestas rápidas para el cliente.
-- Menor tiempo de bloqueo de conexiones HTTP.
-- Mayor capacidad para atender múltiples solicitudes concurrentes.
-- Separación entre aceptación de solicitudes y procesamiento.
+This approach eliminates single points of failure and enables horizontal scalability by allowing additional instances to be added without modifying the business logic.
 
 ---
 
-## Comunicación entre nodos
+# Key Design Decisions
 
-Los nodos forman una red Peer-to-Peer (P2P).
+| Decision | Rationale |
+|----------|-----------|
+| Clean Architecture | Separates business rules from infrastructure, improving maintainability and testability. |
+| Shared SQL Server | Centralizes application state and simplifies distributed coordination. |
+| BackgroundService | Decouples HTTP request handling from payment processing, preventing request blocking. |
+| HTTP Heartbeats | Detect inactive nodes without relying on external coordination tools. |
+| Optimistic Concurrency (`RowVersion`) | Prevents duplicate processing using SQL Server's native concurrency control. |
+| Docker Compose | Brings up the entire platform with a single command. |
+| Inter-node HTTP Communication | Reduces architectural complexity and eliminates the need for external message brokers. |
 
-No existe un coordinador central responsable de distribuir el trabajo.
+---
 
-Cada instancia conoce la dirección de los demás nodos mediante configuración y mantiene comunicación periódica utilizando solicitudes HTTP.
+## Asynchronous Processing
+
+Payment processing does not occur during the HTTP request.
+
+When a client submits a new transaction, the API only validates the request and persists it with a **Pending** status, immediately returning a response to the client.
+
+The actual processing is performed later by a `BackgroundService`, allowing the API to remain lightweight and maintain low latency.
+
+### Benefits
+
+- Fast responses to clients.
+- Reduced HTTP connection blocking time.
+- Improved capacity to handle multiple concurrent requests.
+- Clear separation between request acceptance and transaction processing.
+
+---
+
+## Inter-Node Communication
+
+The nodes form a Peer-to-Peer (P2P) network.
+
+There is no central coordinator responsible for distributing the workload.
+
+Each instance is configured with the addresses of its peer nodes and periodically communicates with them through HTTP requests.
 
 ```text
 Node A  ←────→  Node B
@@ -188,19 +194,20 @@ Node A  ←────→  Node B
          Node C
 ```
 
-Esta estrategia elimina el punto único de fallo y permite incorporar nuevas instancias sin modificar la lógica de coordinación.
+This approach eliminates single points of failure and enables horizontal scalability by allowing new instances to be added without changing the coordination logic.
 
 ---
 
 ## Heartbeat
 
-Cada nodo publica periódicamente un Heartbeat, indicando que continúa activo mientras procesa transacciones.
+Each node periodically publishes a Heartbeat to indicate that it is active while processing transactions.
 
-El Heartbeat representa un mecanismo liviano de supervisión entre nodos y constituye la base para detectar fallos dentro del clúster.
+The Heartbeat serves as a lightweight health monitoring mechanism between nodes and forms the foundation for failure detection within the cluster.
 
-Si un nodo deja de actualizar su Heartbeat durante un tiempo superior al configurado, el resto del clúster lo considera inactivo.
+If a node fails to update its Heartbeat within the configured timeout period, the remaining nodes consider it unavailable.
 
-```Node A
+```text
+Node A
 
 Heartbeat
 Heartbeat
@@ -213,82 +220,83 @@ Timeout
 
 ↓
 
-Node B detecta la ausencia de Heartbeats
+Node B detects the missing Heartbeats
 
 ↓
 
-Node B inicia el proceso de recuperación
+Node B initiates the recovery process
 ```
 
-### Objetivos
+### Objectives
 
-- Detectar nodos caídos.
-- Identificar transacciones abandonadas.
-- Iniciar automáticamente el proceso de recuperación.
-- Evitar intervención manual.
+- Detect failed nodes.
+- Identify abandoned transactions.
+- Automatically initiate the recovery process.
+- Eliminate the need for manual intervention.
 
 ---
 
 ## Lease Ownership
 
-Para evitar que varios nodos procesen simultáneamente la misma transacción, cada pago posee un propietario temporal (Lease Owner).
+To prevent multiple nodes from processing the same transaction simultaneously, each payment is assigned a temporary owner (Lease Owner).
 
-Cuando un nodo reclama una transacción pendiente, registra su identidad como propietario del procesamiento.
+When a node claims a pending transaction, it records its identity as the current processing owner.
 
-Mientras dicho Lease permanezca vigente, ningún otro nodo podrá continuar ese trabajo.
+As long as the lease remains valid, no other node is allowed to process that transaction.
 
-```
+```text
 TX-100
 
 Owner = node-b
 
 Status = Processing
 ```
-Si el propietario deja de responder y su Heartbeat expira, otro nodo puede reclamar nuevamente esa transacción y convertirse en el nuevo propietario.
 
-Esta estrategia evita condiciones de carrera sin necesidad de utilizar mecanismos de bloqueo distribuidos externos.
+If the current owner becomes unavailable and its Heartbeat expires, another node can reclaim the transaction and assume ownership.
+
+This approach prevents race conditions without relying on external distributed locking mechanisms.\
 
 ---
 
 ## Optimistic Concurrency
 
-La consistencia de los datos se garantiza mediante Optimistic Concurrency utilizando una columna `RowVersion` administrada por SQL Server.
+Data consistency is ensured through Optimistic Concurrency using a `RowVersion` column managed by SQL Server.
 
-Cada actualización verifica que ningún otro proceso haya modificado previamente el mismo registro.
+Each update verifies that the record has not been modified by another process since it was last read.
 
-Si dos nodos intentan actualizar simultáneamente una transacción, únicamente uno podrá completar la operación; el segundo recibirá una excepción de concurrencia y descartará el procesamiento.
+If two nodes attempt to update the same transaction simultaneously, only one operation will succeed. The other will receive a concurrency exception and discard its processing attempt.
 
-### Beneficios
+### Benefits
 
-- Evita bloqueos prolongados en la base de datos.
-- Reduce la contención entre procesos concurrentes.
-- Garantiza consistencia incluso bajo alta concurrencia.
-- Aprovecha las capacidades nativas de SQL Server.
+- Prevents long-running database locks.
+- Reduces contention between concurrent processes.
+- Ensures data consistency even under high concurrency.
+- Leverages SQL Server's built-in concurrency control mechanisms.
 
 ---
 
-## Idempotencia
+## Idempotency
 
-Uno de los requisitos principales del desafío consiste en garantizar que un pago nunca sea procesado más de una vez.
+One of the primary requirements of the challenge is to ensure that a payment is never processed more than once.
 
-La solución implementa idempotencia mediante la combinación de:
+The solution achieves idempotency through the combination of:
 
-- Estado de la transacción.
+- Transaction status.
 - Lease Ownership.
 - Optimistic Concurrency.
-- Validaciones antes de iniciar el procesamiento.
+- Validation checks before processing begins.
 
-Una transacción marcada como Completed nunca volverá a ser reclamada, incluso si otro nodo intenta procesarla posteriormente.
+Once a transaction is marked as **Completed**, it can no longer be claimed or processed again, even if another node attempts to do so.
 
 ---
 
-# Recuperación ante Fallos
+# Failure Recovery
 
-La recuperación automática constituye el núcleo de la solución.
+Automatic recovery is the core capability of the solution.
 
-Cuando un nodo deja de responder durante el procesamiento de un pago, el resto del clúster continúa supervisando su estado mediante Heartbeats.
+When a node becomes unavailable while processing a payment, the remaining nodes continue monitoring the cluster through periodic Heartbeats.
 
-Si el tiempo de espera configurado expira, cualquier nodo disponible puede reclamar las transacciones que quedaron en estado Processing, reasignando el trabajo y completándolo sin intervención humana.
+If the configured timeout expires, any available node can reclaim transactions left in the **Processing** state, reassign ownership, and complete the processing automatically without human intervention.
 
 ```mermaid
 sequenceDiagram
@@ -297,29 +305,28 @@ participant A as Node A
 participant B as Node B
 participant DB as SQL Server
 
-A->>DB: Reclama TX-100
+A->>DB: Claims TX-100
 A->>DB: Status = Processing
 
-A--xB: Heartbeat detenido
+A--xB: Heartbeat stopped
 
-Note over B: Timeout detectado
+Note over B: Timeout detected
 
-B->>DB: Reclama TX-100
+B->>DB: Claims TX-100
 
-DB-->>B: Lease concedido
+DB-->>B: Lease granted
 
-B->>DB: Procesa pago
+B->>DB: Processes payment
 
 B->>DB: Status = Completed
 ```
 
-La solución no implementa algoritmos formales de consenso como Raft o Paxos. En su lugar, utiliza una coordinación liviana basada en base de datos compartida, Heartbeats periódicos, Lease Ownership y Optimistic Concurrency. Suficiente para el alcance de la prueba, manteniendo simplicidad y evitando servicios externos.
-
+The solution does not implement formal consensus algorithms such as Raft or Paxos. Instead, it relies on a lightweight coordination strategy based on a shared database, periodic Heartbeats, Lease Ownership, and Optimistic Concurrency. This approach is sufficient for the scope of the challenge, keeping the architecture simple while avoiding external coordination services.
 ___
 
-# Estructura del proyecto
+# Project Structure
 
-```
+```text
 SolidarityGrid
 │
 ├── .github
@@ -348,47 +355,44 @@ SolidarityGrid
 │   │   ├── DependencyInjection.cs
 │   │   └── GlobalUsingApplication.cs
 │   │
-│   └──SolidarityGrid.Infrastructure
-│   │   ├── Configuration
-│   │   ├── HostedServices
-│   │   ├── Mesh
-│   │   ├── Migrations
-│   │   ├── Persistence
-│   │   ├── Repositories
-│   │   ├── DependencyInjection.cs
-│   │   └── GlobalUsingsInfrastructure.cs 
+│   └── SolidarityGrid.Infrastructure
+│       ├── Configuration
+│       ├── HostedServices
+│       ├── Mesh
+│       ├── Migrations
+│       ├── Persistence
+│       ├── Repositories
+│       ├── DependencyInjection.cs
+│       └── GlobalUsingsInfrastructure.cs
 │
 ├── tests
 ├── .gitignore
 ├── docker-compose.yml
 └── README.md
-
 ```
 ___
-## Sección: Tecnologías
 
-```markdown
-# Tecnologías
+# Technologies
 
-La solución fue desarrollada utilizando tecnologías del ecosistema .NET, priorizando simplicidad, mantenibilidad y facilidad de despliegue.
+The solution was built using technologies from the .NET ecosystem, prioritizing simplicity, maintainability, and ease of deployment.
 
-| Tecnología | Versión | Propósito |
-|------------|---------|-----------|
-| .NET | 8 | Plataforma principal |
-| ASP.NET Core | 8 | API REST |
-| Entity Framework Core | 8 | Persistencia |
-| SQL Server | 2022 | Base de datos compartida |
-| Docker | 27+ | Contenedorización |
-| Docker Compose | v2 | Orquestación local |
-| Swagger / OpenAPI | 3.0 | Documentación de la API |
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| .NET | 8 | Primary development platform |
+| ASP.NET Core | 8 | REST API |
+| Entity Framework Core | 8 | Data persistence |
+| SQL Server | 2022 | Shared database |
+| Docker | 27+ | Containerization |
+| Docker Compose | v2 | Local orchestration |
+| Swagger / OpenAPI | 3.0 | API documentation |
 
 ---
 
-# Configuración
+# Configuration
 
-Cada instancia de la aplicación posee una configuración independiente que define su identidad dentro del clúster y los parámetros utilizados para coordinar el procesamiento distribuido.
+Each application instance has its own configuration, defining its identity within the cluster and the parameters used to coordinate distributed processing.
 
-## Configuración del nodo
+## Node Configuration
 
 ```json
 {
@@ -404,31 +408,28 @@ Cada instancia de la aplicación posee una configuración independiente que defi
 }
 ```
 
-## Parámetros
+## Parameters
 
-| Propiedad | Descripción |
-|------------|-------------|
-| NodeName | Identificador único del nodo dentro del clúster. |
-| HeartbeatTimeoutSeconds | Tiempo máximo permitido sin recibir Heartbeats antes de considerar un nodo inactivo. |
-| ProcessingIntervalSeconds | Intervalo utilizado por el Background Service para buscar nuevas transacciones pendientes. |
-| PeerNodes | Lista de nodos con los que se mantiene comunicación para verificar el estado del clúster. |
+| Property | Description |
+|----------|-------------|
+| NodeName | Unique identifier of the node within the cluster. |
+| HeartbeatTimeoutSeconds | Maximum time allowed without receiving Heartbeats before a node is considered unavailable. |
+| ProcessingIntervalSeconds | Interval used by the Background Service to scan for new pending transactions. |
+| PeerNodes | List of peer nodes used to monitor the health and availability of the cluster. |
 
 ---
 
-## Sección: Ejecución
+# Getting Started
 
-```markdown
-# Ejecución
+## Prerequisites
 
-## Requisitos
+Before running the solution, ensure the following tools are installed:
 
-Antes de ejecutar la solución es necesario contar con:
-
-- .NET SDK 8
+- .NET 8 SDK
 - Docker Desktop
 - Docker Compose
 
-## Clonar el repositorio
+## Clone the Repository
 
 ```bash
 git clone https://github.com/DavidV-2/SolidarityGrid.git
@@ -436,62 +437,60 @@ git clone https://github.com/DavidV-2/SolidarityGrid.git
 cd SolidarityGrid
 ```
 
-## Levantar toda la plataforma
+## Start the Platform
 
-La solución completa se inicia mediante un único comando.
+The entire platform can be started with a single command.
 
 ```bash
 docker compose up --build
 ```
 
-Este comando crea automáticamente:
+This command automatically creates:
 
-- Base de datos SQL Server.
-- Red interna de Docker.
-- Nodo A.
-- Nodo B.
-- Nodo C.
+- SQL Server database.
+- Docker internal network.
+- Node A.
+- Node B.
+- Node C.
 
-No se requiere ninguna configuración manual adicional.
+No additional manual configuration is required.
 
 ---
+## Containers
 
-## Contenedores
+Once the environment is running, the following services should be available:
 
-Una vez iniciado el entorno deberán encontrarse los siguientes servicios:
+| Container | Purpose |
+|-----------|---------|
+| solidaritygrid-node-a | Processing node |
+| solidaritygrid-node-b | Processing node |
+| solidaritygrid-node-c | Processing node |
+| solidaritygrid-sql | SQL Server database |
 
-| Contenedor | Función |
-|------------|----------|
-| solidaritygrid-node-a | Nodo de procesamiento |
-| solidaritygrid-node-b | Nodo de procesamiento |
-| solidaritygrid-node-c | Nodo de procesamiento |
-| solidaritygrid-sql | SQL Server |
-
-Puede verificarse utilizando:
+You can verify the running containers using:
 
 ```bash
 docker ps
 ```
 
-# Acceso a Swagger
+# Swagger Access
 
-Cada nodo expone su propia documentación OpenAPI.
+Each node exposes its own OpenAPI documentation.
 
-| Nodo | URL |
-|-------|-----|
+| Node | URL |
+|------|-----|
 | Node A | http://localhost:8081/swagger |
 | Node B | http://localhost:8082/swagger |
 | Node C | http://localhost:8083/swagger |
 
-Aunque cualquiera de los tres puede recibir solicitudes, durante las pruebas es suficiente utilizar uno de ellos.
+Although any of the three nodes can receive requests, using a single node is sufficient for testing purposes.
 
 ---
-
 # API
 
-## Crear un pago
+## Create a Payment
 
-Registra una nueva solicitud de procesamiento.
+Registers a new payment processing request.
 
 ### Endpoint
 
@@ -509,21 +508,21 @@ POST /api/payments
 }
 ```
 
-### Respuesta
+### Response
 
 ```http
 202 Accepted
 ```
 
-La API responde inmediatamente después de registrar la transacción.
+The API responds immediately after registering the transaction.
 
-El procesamiento continúa de forma asíncrona mediante un `BackgroundService`.
+Payment processing continues asynchronously through a `BackgroundService`.
 
 ---
 
-## Consultar pagos
+## Get Payments
 
-Obtiene el listado de transacciones registradas y su estado actual.
+Retrieves the list of registered transactions along with their current status.
 
 ### Endpoint
 
@@ -531,28 +530,28 @@ Obtiene el listado de transacciones registradas y su estado actual.
 GET /api/payments
 ```
 
-### Información disponible
+### Available Information
 
-- Identificador de la transacción.
-- Estado.
-- Nodo responsable.
-- Fecha de creación.
-- Fecha de inicio del procesamiento.
-- Fecha de finalización.
+- Transaction identifier.
+- Current status.
+- Processing node.
+- Creation timestamp.
+- Processing start timestamp.
+- Completion timestamp.
 
-### Ejemplo
+### Example
 
 | Transaction | Status | Owner |
-|--------------|------------|-----------|
+|-------------|--------|-------|
 | TX001 | Completed | node-a |
 | TX002 | Processing | node-c |
 | TX003 | Pending | - |
 
 ---
 
-## Estado del clúster
+## Cluster Status
 
-Permite conocer qué nodos se encuentran disponibles.
+Returns the current health status of the cluster by identifying which nodes are available.
 
 ### Endpoint
 
@@ -560,7 +559,7 @@ Permite conocer qué nodos se encuentran disponibles.
 GET /api/nodes/status
 ```
 
-### Respuesta
+### Response
 
 ```json
 {
@@ -574,55 +573,56 @@ GET /api/nodes/status
 }
 ```
 
-Este endpoint facilita verificar el comportamiento del mecanismo de Heartbeats durante las pruebas de resiliencia.
----
-
-## 5. Recuperación automática
-
-Uno de los nodos disponibles reclamará las transacciones que quedaron pendientes y continuará el procesamiento hasta completarlas.
-
-No se requiere intervención manual.
+This endpoint is useful for verifying the Heartbeat mechanism during resilience and failover testing.
 
 ---
 
-## Resultado esperado
+## 5. Automatic Recovery
 
-Después de consultar nuevamente:
+One of the available nodes will reclaim any transactions left in the **Processing** state and continue processing them until completion.
+
+No manual intervention is required.
+
+---
+
+## Expected Result
+
+After querying the endpoint again:
 
 ```http
 GET /api/payments
 ```
 
-Las transacciones originalmente asignadas al nodo detenido deberán aparecer con estado:
+The transactions originally assigned to the failed node should now appear with the following status:
 
 ```text
 Completed
 ```
 
-y con un nuevo nodo responsable.
+and be owned by a different processing node.
 
-Este comportamiento demuestra la capacidad de recuperación automática del clúster frente a fallos inesperados.
+This behavior demonstrates the cluster's ability to automatically recover from unexpected node failures.
 
 ---
 
-# Observabilidad
+# Observability
 
-Uno de los criterios de evaluación de la prueba consiste en que los registros permitan comprender claramente el comportamiento del sistema distribuido.
+One of the evaluation criteria for this challenge is the ability to clearly understand the behavior of the distributed system through its logs.
 
-Por este motivo, cada nodo registra los eventos más relevantes del ciclo de vida de una transacción.
+For this reason, each node records the most relevant events throughout the lifecycle of a transaction.
 
-## Eventos registrados
+## Logged Events
 
-- Inicio del procesamiento.
-- Reclamo de una transacción.
-- Actualización del Heartbeat.
-- Detección de nodos inactivos.
-- Recuperación de transacciones.
-- Finalización del procesamiento.
-- Errores de concurrencia.
-- Cambios de estado.
+- Transaction processing started.
+- Transaction claimed.
+- Heartbeat published.
+- Inactive node detected.
+- Transaction recovery initiated.
+- Transaction processing completed.
+- Concurrency conflicts.
+- Transaction state changes.
 
-## Ejemplo de ejecución normal
+## Example of Normal Execution
 
 ```text
 [node-a] Payment TX-100 registered.
@@ -634,7 +634,7 @@ Por este motivo, cada nodo registra los eventos más relevantes del ciclo de vid
 [node-a] Transaction TX-100 completed successfully.
 ```
 
-## Ejemplo de recuperación
+## Recovery Example
 
 ```text
 [node-a] Processing transaction TX-200...
@@ -646,17 +646,17 @@ Por este motivo, cada nodo registra los eventos más relevantes del ciclo de vid
 [node-b] Transaction TX-200 completed successfully.
 ```
 
-Estos registros permiten reconstruir el flujo completo de una transacción y facilitan el análisis del comportamiento del sistema durante escenarios de alta concurrencia o fallos.
+These logs make it possible to reconstruct the complete lifecycle of a transaction and simplify the analysis of the system's behavior under high concurrency and failure scenarios.
 
 ---
 
-# Autor
+# Author
 
-David Estiven Vélez González
+**David Estiven Vélez González**
 
-Full Stack .NET Developer
+**Full-Stack .NET Developer**
 
-Tecnologías principales:
+**Core Technologies**
 
 - C#
 - .NET 8
@@ -665,21 +665,21 @@ Tecnologías principales:
 - SQL Server
 - Docker
 - Clean Architecture
-- APIs REST
-- Sistemas Distribuidos
+- REST APIs
+- Distributed Systems
 
 ___
 
 # Local Pipeline
 
 ```powershell
-Write-Host "1. Levantando la red Mesh de SolidarityGrid..." -ForegroundColor Cyan
+Write-Host "1. Starting the SolidarityGrid Mesh network..." -ForegroundColor Cyan
 docker compose up -d --build
 
-Write-Host "2. Esperando el inicio de los contenedores y SQL Server..." -ForegroundColor Yellow
+Write-Host "2. Waiting for containers and SQL Server to initialize..." -ForegroundColor Yellow
 Start-Sleep -Seconds 15
 
-Write-Host "3. Simulando inyección de pagos concurrentes (Stress Test)..." -ForegroundColor Cyan
+Write-Host "3. Simulating concurrent payment injection (Stress Test)..." -ForegroundColor Cyan
 1..5 | ForEach-Object {
      $body = @{
          transactionId = "TX$($_)"
@@ -694,8 +694,9 @@ Write-Host "3. Simulando inyección de pagos concurrentes (Stress Test)..." -For
          -Body $body
 }
 
-Write-Host "4. [CAOS] Derribando bruscamente el Nodo A..." -ForegroundColor Red
+Write-Host "4. [CHAOS] Abruptly stopping Node A..." -ForegroundColor Red
 docker stop solidaritygrid-node-a
 
-Write-Host "5. Monitoreando logs del clúster de relevo (Nodo B y C)..." -ForegroundColor Green
+Write-Host "5. Monitoring the failover cluster logs (Node B and Node C)..." -ForegroundColor Green
 docker compose logs -f node-b node-c
+```
